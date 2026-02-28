@@ -6,8 +6,8 @@ from sqlmodel import Session, create_engine
 
 from app.config import settings
 from app.database import get_session
-from app.main import app
 import app.models  # noqa: F401 — registers table metadata with SQLModel
+from app.main import app
 
 test_engine = create_engine(settings.DATABASE_URL, echo=False)
 
