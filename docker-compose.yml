@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: billing
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/billing
+    depends_on:
+      db:
+        condition: service_healthy
+
+  test:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/billing_test
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["sh", "-c", "PGPASSWORD=postgres psql -h db -U postgres -c 'CREATE DATABASE billing_test' 2>/dev/null || true; pytest tests/ -v"]
+    profiles:
+      - test
+
+volumes:
+  pgdata:
